@@ -87,6 +87,19 @@ async function run() {
       res.send(result);
     });
 
+    app.patch("/approve-news/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          status: "active",
+        },
+      };
+
+      const result = await newsCollection.updateOne(query, updatedDoc);
+      res.send(result);
+    });
+
     app.patch("/news-increment-view/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
@@ -97,6 +110,13 @@ async function run() {
 
       const result = await newsCollection.updateOne(filter, updatedDoc);
 
+      res.send(result);
+    });
+
+    app.delete("/news/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await newsCollection.deleteOne(query);
       res.send(result);
     });
 
