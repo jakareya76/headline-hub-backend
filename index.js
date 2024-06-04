@@ -29,6 +29,9 @@ async function run() {
   try {
     const newsCollection = client.db("headline-hub").collection("news");
     const usersCollection = client.db("headline-hub").collection("users");
+    const publishersCollection = client
+      .db("headline-hub")
+      .collection("publishers");
 
     const verifyToken = (req, res, next) => {
       if (!req.headers.authorization) {
@@ -80,6 +83,19 @@ async function run() {
       const news = req.body;
 
       const result = await newsCollection.insertOne(news);
+
+      res.send(result);
+    });
+
+    app.patch("/news-increment-view/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+
+      const updatedDoc = {
+        $inc: { viewCount: 1 },
+      };
+
+      const result = await newsCollection.updateOne(filter, updatedDoc);
 
       res.send(result);
     });
@@ -137,6 +153,44 @@ async function run() {
       }
 
       const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
+
+    app.patch(
+      "/users/admin/:id",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+
+        const updatedDoc = {
+          $set: {
+            role: "admin",
+          },
+        };
+
+        const result = await usersCollection.updateOne(filter, updatedDoc);
+        res.send(result);
+      }
+    );
+
+    app.delete("/users/:id", verifyToken, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await usersCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // publishers api
+    app.get("/publishers", async (req, res) => {
+      const result = await publishersCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.post("/publishers", async (req, res) => {
+      const publisher = req.body;
+      const result = publishersCollection.insertOne(publisher);
       res.send(result);
     });
 
