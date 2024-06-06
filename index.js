@@ -79,7 +79,7 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/news", async (req, res) => {
+    app.post("/news", verifyToken, async (req, res) => {
       const news = req.body;
 
       const result = await newsCollection.insertOne(news);
@@ -87,18 +87,23 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/approve-news/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
-      const updatedDoc = {
-        $set: {
-          status: "active",
-        },
-      };
+    app.patch(
+      "/approve-news/:id",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const updatedDoc = {
+          $set: {
+            status: "active",
+          },
+        };
 
-      const result = await newsCollection.updateOne(query, updatedDoc);
-      res.send(result);
-    });
+        const result = await newsCollection.updateOne(query, updatedDoc);
+        res.send(result);
+      }
+    );
 
     app.patch("/news-increment-view/:id", async (req, res) => {
       const id = req.params.id;
@@ -113,47 +118,57 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/decline-feedback/:id", async (req, res) => {
-      const id = req.params.id;
-      const feedback = req.body;
+    app.patch(
+      "/decline-feedback/:id",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        const id = req.params.id;
+        const feedback = req.body;
 
-      const filter = { _id: new ObjectId(id) };
-      const options = { upsert: true };
+        const filter = { _id: new ObjectId(id) };
+        const options = { upsert: true };
 
-      const updatedDoc = {
-        $set: { feedback: feedback.feedback, status: "decline" },
-      };
+        const updatedDoc = {
+          $set: { feedback: feedback.feedback, status: "decline" },
+        };
 
-      const result = await newsCollection.updateOne(
-        filter,
-        updatedDoc,
-        options
-      );
+        const result = await newsCollection.updateOne(
+          filter,
+          updatedDoc,
+          options
+        );
 
-      res.send(result);
-    });
+        res.send(result);
+      }
+    );
 
-    app.patch("/news-make-premium/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const options = { upsert: true };
+    app.patch(
+      "/news-make-premium/:id",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const options = { upsert: true };
 
-      const updatedDoc = {
-        $set: {
-          isPremium: true,
-        },
-      };
+        const updatedDoc = {
+          $set: {
+            isPremium: true,
+          },
+        };
 
-      const result = await newsCollection.updateOne(
-        filter,
-        updatedDoc,
-        options
-      );
+        const result = await newsCollection.updateOne(
+          filter,
+          updatedDoc,
+          options
+        );
 
-      res.send(result);
-    });
+        res.send(result);
+      }
+    );
 
-    app.delete("/news/:id", async (req, res) => {
+    app.delete("/news/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await newsCollection.deleteOne(query);
@@ -169,6 +184,20 @@ async function run() {
       });
 
       res.send({ token });
+    });
+
+    // Publisher api
+    app.get("/publishers", verifyToken, async (req, res) => {
+      const result = await publishersCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.post("/publishers", async (req, res) => {
+      const data = req.body;
+
+      const result = await publishersCollection.insertOne(data.publisher_info);
+
+      res.send(result);
     });
 
     // users api
