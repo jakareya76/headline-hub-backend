@@ -68,7 +68,27 @@ async function run() {
 
     // news api
     app.get("/all-news", async (req, res) => {
-      const result = await newsCollection.find().toArray();
+      const { search, publisher, category, status } = req.query;
+
+      const filter = {};
+
+      if (search) {
+        filter.title = { $regex: search, $options: "i" };
+      }
+
+      if (publisher) {
+        filter.publisher = publisher;
+      }
+
+      if (category) {
+        filter.category = category;
+      }
+
+      if (status) {
+        filter.status = status;
+      }
+
+      const result = await newsCollection.find(filter).toArray();
       res.send(result);
     });
 
