@@ -10,7 +10,11 @@ const port = process.env.PORT || 5000;
 app.use(express.json());
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: [
+      "http://localhost:5173",
+      "https://headline-hub-762d6.web.app",
+      "https://headline-hub-762d6.firebaseapp.com",
+    ],
   })
 );
 
@@ -208,27 +212,6 @@ async function run() {
       res.send({ token });
     });
 
-    // Publisher api
-    app.get("/publishers", verifyToken, async (req, res) => {
-      const result = await publishersCollection.find().toArray();
-      res.send(result);
-    });
-
-    app.post("/publishers", async (req, res) => {
-      const data = req.body;
-
-      const result = await publishersCollection.insertOne(data.publisher_info);
-
-      res.send(result);
-    });
-
-    app.delete("/publishers/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
-      const result = await publishersCollection.deleteOne(query);
-      res.send(result);
-    });
-
     // users api
     app.get("/users", verifyToken, verifyAdmin, async (req, res) => {
       const result = await usersCollection.find().toArray();
@@ -325,6 +308,18 @@ async function run() {
 
       res.send(publishersStats);
     });
+
+    app.delete(
+      "/publishers/:id",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await publishersCollection.deleteOne(query);
+        res.send(result);
+      }
+    );
 
     // subscribe api
 
