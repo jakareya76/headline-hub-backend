@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 var jwt = require("jsonwebtoken");
+const stripe = require("stripe")(process.env.STRIPE_KEY);
 require("dotenv").config();
 
 const app = express();
@@ -29,6 +30,7 @@ async function run() {
   try {
     const newsCollection = client.db("headline-hub").collection("news");
     const usersCollection = client.db("headline-hub").collection("users");
+    const paymentsCollection = client.db("headline-hub").collection("payments");
     const publishersCollection = client
       .db("headline-hub")
       .collection("publishers");
@@ -309,6 +311,8 @@ async function run() {
       const result = publishersCollection.insertOne(publisher);
       res.send(result);
     });
+
+    // subscribe api
 
     await client.db("admin").command({ ping: 1 });
     console.log(
