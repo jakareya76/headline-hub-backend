@@ -306,10 +306,24 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/publishers", async (req, res) => {
+    app.post("/publishers", verifyToken, verifyAdmin, async (req, res) => {
       const publisher = req.body;
       const result = publishersCollection.insertOne(publisher);
       res.send(result);
+    });
+
+    app.get("/publishers-stats", verifyToken, verifyAdmin, async (req, res) => {
+      const publishers = await publishersCollection.find().toArray();
+      const articles = await newsCollection.find().toArray();
+
+      const publishersStats = publishers.map((publisher) => {
+        const articlesCount = articles.filter(
+          (article) => article.publisher === publisher.name
+        ).length;
+        return { publisher: publisher.name, articlesCount };
+      });
+
+      res.send(publishersStats);
     });
 
     // subscribe api
