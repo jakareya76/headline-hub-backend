@@ -1,8 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 var jwt = require("jsonwebtoken");
-const stripe = require("stripe")(process.env.STRIPE_KEY);
 require("dotenv").config();
+const stripe = require("stripe")(process.env.STRIPE_KEY);
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -218,6 +218,13 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/single-user/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await usersCollection.findOne(query);
+      res.send(result);
+    });
+
     app.get(
       "/users/admin/:email",
       verifyToken,
@@ -276,6 +283,27 @@ async function run() {
       }
     );
 
+    app.patch("/make-user-premium/:email", async (req, res) => {
+      const email = req.params.email;
+
+      const filter = { email: email };
+      const options = { upsert: true };
+
+      const updatedDoc = {
+        $set: {
+          isPremium: true,
+        },
+      };
+
+      const result = await usersCollection.updateOne(
+        filter,
+        updatedDoc,
+        options
+      );
+
+      res.send(result);
+    });
+
     app.delete("/users/:id", verifyToken, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -322,6 +350,18 @@ async function run() {
     );
 
     // subscribe api
+    app.post("/create-payment-intent", async (req, res) => {
+      const { price } = req.body;
+      const amount = parseInt(price * 100);
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+
+      res.send({ clientSecret: paymentIntent.client_secret });
+    });
 
     await client.db("admin").command({ ping: 1 });
     console.log(
