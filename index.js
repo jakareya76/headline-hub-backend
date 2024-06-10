@@ -107,8 +107,23 @@ async function run() {
 
     app.post("/news", verifyToken, async (req, res) => {
       const news = req.body;
-
       const result = await newsCollection.insertOne(news);
+      res.send(result);
+    });
+
+    app.patch("/update-news/:id", async (req, res) => {
+      const id = req.params.id;
+      const data = req.body;
+
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          title: data.title,
+          content: data.content,
+        },
+      };
+
+      const result = await newsCollection.updateOne(filter, updatedDoc);
 
       res.send(result);
     });
